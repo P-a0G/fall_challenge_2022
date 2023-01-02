@@ -4,7 +4,7 @@ import numpy as np
 import random
 
 directions = {"up": (-1, 0), "down": (1, 0), "right": (0, 1), "left": (0, -1)}
-BUILD_SCORE_THRESHOLD = 3
+BUILD_SCORE_THRESHOLD = 20
 
 
 def debug_print(*args):
@@ -64,7 +64,7 @@ class Robot:
             dx, dy = d
             new_x, new_y = self.x + dx, self.y + dy
             if 0 <= new_x < height and 0 <= new_y < width:
-                if scrap_amount_map[new_x, new_y] > 0:
+                if scrap_amount_map[new_x, new_y] > 0 and recycler_map[new_x, new_y] == 0:
                     possibilities.append((new_x, new_y))
                     if owner_map[new_x, new_y] < 1:
                         better_possibilites.append((new_x, new_y))
@@ -74,7 +74,7 @@ class Robot:
 
         if len(better_possibilites) > 0:
             moves = random.sample(better_possibilites,
-                                  min(self.n, len(better_possibilites)))  # todo move robots separately
+                                  min(self.n, len(better_possibilites)))
         else:
             target = self.get_target()
 
@@ -181,7 +181,7 @@ while True:
             if cell.can_build:
                 possible_build_positions.append([i, j, 0])
 
-            if cell.can_spawn and not cell.units:
+            if cell.can_spawn:
                 possible_spawn_positions.append([i, j, 0])
 
     # compute build scores
@@ -206,13 +206,15 @@ while True:
         if scrap_amount_map[x, y] < 3:
             continue
 
+        possible_build_positions[i][-1] = scrap_amount_map[x, y]
+
         for d in directions.values():
             dx, dy = d
             new_x, new_y = x + dx, y + dy
             if 0 <= new_x < height and 0 <= new_y < width:
                 if not (recycler_map[new_x, new_y] and owner_map[new_x, new_y] == 1) and scrap_amount_map[x, y] < \
                         scrap_amount_map[new_x, new_y]:
-                    possible_build_positions[i][-1] += 1
+                    possible_build_positions[i][-1] += min(scrap_amount_map[new_x, new_y], scrap_amount_map[x, y])
 
     # compute spawn score
     for i in range(len(possible_spawn_positions)):
