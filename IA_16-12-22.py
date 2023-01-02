@@ -4,7 +4,7 @@ import numpy as np
 import random
 
 directions = {"up": (-1, 0), "down": (1, 0), "right": (0, 1), "left": (0, -1)}
-BUILD_SCORE_THRESHOLD = 1
+BUILD_SCORE_THRESHOLD = 3
 
 
 def debug_print(*args):
@@ -88,16 +88,16 @@ def distance(x, y, a, b):
     return abs(x - a) + abs(y - b)
 
 
-def get_spawn_score(x, y, opp_bots_objects, my_bots_objects, owner_map):
+def get_spawn_score(i, j, opp_bots_objects, my_bots_objects, owner_map):
     score = 0
 
     for robot in opp_bots_objects:
-        if distance(x, y, robot.x, robot.y) <= 2:
+        if distance(i, j, robot.x, robot.y) <= 2:
             score += 1
 
     for d in directions.values():
         dx, dy = d
-        new_x, new_y = x + dx, y + dy
+        new_x, new_y = i + dx, j + dy
         if 0 <= new_x < height and 0 <= new_y < width:
             if owner_map[new_x, new_y] == 0:
                 score += 10
@@ -153,18 +153,33 @@ while True:
                 possible_spawn_positions.append([i, j, 0])
 
     # compute build scores
+    print("possible build pos:", len(possible_build_positions), file=sys.stderr, flush=True)
     for i in range(len(possible_build_positions)):
         x, y, _ = possible_build_positions[i]
 
+        # build to block opp
+        """
         for d in directions.values():
             dx, dy = d
             new_x, new_y = x + dx, y + dy
+            
             if 0 <= new_x < height and 0 <= new_y < width:
                 owner = owner_map[new_x, new_y]
                 if owner == 1:
                     possible_build_positions[i][-1] -= units_map[new_x, new_y]
                 elif owner == 0:
                     possible_build_positions[i][-1] += units_map[new_x, new_y]
+        """
+        # build recycler to product resources
+        if scrap_amount_map[x, y] < 3:
+            continue
+
+        for d in directions.values():
+            dx, dy = d
+            new_x, new_y = x + dx, y + dy
+            if 0 <= new_x < height and 0 <= new_y < width:
+                if not (recycler_map[new_x, new_y] and owner_map[new_x, new_y] == 1) and scrap_amount_map[x, y] < scrap_amount_map[new_x, new_y]:
+                    possible_build_positions[i][-1] += 1
 
     # compute spawn score
     for i in range(len(possible_spawn_positions)):
@@ -173,6 +188,7 @@ while True:
         possible_spawn_positions[i][-1] = score
 
     possible_build_positions.sort(key=lambda x: x[-1])
+    print("build score:", possible_build_positions[-1], file=sys.stderr, flush=True)
     possible_spawn_positions.sort(key=lambda x: x[-1])
 
     actions = []
@@ -185,6 +201,7 @@ while True:
     # farm
     if turn <= 15 and len(my_bots_objects) >= 4 and len(possible_build_positions) > 0:
         x, y, score = possible_build_positions.pop(-1)
+        actions.append(f'MESSAGE {"building"}')
         while my_matter >= 10 and score >= BUILD_SCORE_THRESHOLD:
             actions.append(f'BUILD {y} {x}')
 

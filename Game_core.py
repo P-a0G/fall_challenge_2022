@@ -26,14 +26,6 @@ class Cell:
                 self.recycler = 0
 
 
-def can_build():
-    pass  # todo
-
-
-def can_spawn():
-    pass  # todo
-
-
 class Player:
     def __init__(self, id):
         self.matter = 10

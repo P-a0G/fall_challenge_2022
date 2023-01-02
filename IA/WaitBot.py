@@ -4,4 +4,4 @@ class WaitBot:
 
     @staticmethod
     def get_move(my_matter, opp_matter, cells_param):
-        return ["WAIT"]
+        return "WAIT"

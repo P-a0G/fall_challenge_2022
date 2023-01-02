@@ -1,10 +1,10 @@
 from Game_core import Core
 from IA.Bot1 import Bot1
+from IA.WaitBot import WaitBot
 import time
 import numpy as np
 from tqdm import tqdm
 from utils import debug_map
-# test
 
 
 class Simulator:
@@ -58,7 +58,7 @@ class Simulator:
                         self.convert_owner(1, cell.owner),
                         cell.units,
                         cell.recycler,
-                        cell.owner == 1 and not cell.recycler,  # can build
+                        cell.owner == 1 and not cell.recycler and cell.units == 0,  # can build
                         cell.owner == 1 and not cell.recycler,  # can spawn
                         cell.in_range_of_recycler))
                 cells_param.append(line)
@@ -123,6 +123,7 @@ if __name__ == '__main__':
 
     start = time.time()
     played_games = 0
+    nb_win = 0
 
     avr_score = 0
     for k in tqdm(range(n_games)):
@@ -136,10 +137,13 @@ if __name__ == '__main__':
             continue
 
         avr_score += score
+        if score > 0:
+            nb_win += 1
         played_games += 1
 
-    print("End of simulation:", time.time() - start, "s")
-    print("Played games =", played_games)
-    print("Average score =", avr_score / n_games)
+    print("End of simulation: ", time.time() - start, "s")
+    print("Played games =     ", played_games)
+    print("Average score =    ", avr_score / n_games)
+    print("Win rate =         ", round(nb_win / played_games * 100, 2), "%")
 
 
